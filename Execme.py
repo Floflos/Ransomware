@@ -94,9 +94,9 @@ def chiffre():
 
 			try:
 
-
+				content =b"0000000000000000"
 				f = open(file, "rb")
-				content = f.read()
+				content += f.read()
 
 				#supression des anciens fichiers avec shred
 				os.system("shred -vzu "+ file +" >/dev/null 2>&1")
@@ -149,7 +149,7 @@ def dechiffre():
 		else:
 			d = d.rstrip(b"1")
 		fenc = open(file.replace(".enc",""), "wb") #on ecrit notre fichier clair sans l'extension
-		fenc.write(d)
+		fenc.write(d[16:])
 		fenc.close()
 
 
